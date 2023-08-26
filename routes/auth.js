@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 
 const { registerValidation, loginValidation} = require('../utils/validation');
 
-const saltRounds = 10;
+const saltRounds = process.env.SALT;
 
 router.post('/register', async (req, res) => {
     const { error } = registerValidation(req.body);

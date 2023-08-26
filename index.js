@@ -9,7 +9,7 @@ const authRouter = require('./routes/auth');
 dotenv.config();
 
 mongoose.connect(
-    process.env.DB_URL,
+    process.env.DATABASE_URL,
     { useNewUrlParser: true },
 );
 

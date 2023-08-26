@@ -10,14 +10,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pKYZ/FPM_2023B1-2.git"
+    "url": "git+https://github.com/JoaquinBadillo/TicketsAPI.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/pKYZ/FPM_2023B1-2/issues"
+    "url": "https://github.com/JoaquinBadillo/TicketsAPI/issues"
   },
-  "homepage": "https://github.com/pKYZ/FPM_2023B1-2#readme",
+  "homepage": "https://github.com/JoaquinBadillo/TicketsAPI#readme",
   "dependencies": {
     "@hapi/joi": "^17.1.1",
     "bcryptjs": "^2.4.3",
