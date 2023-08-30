@@ -44,7 +44,7 @@ Environment variables allow us to share this repository without exposing sensibl
 
 The `PORT` is a numerical variable that defines a connection endpoint to the server (a network port) running the API; beware that port numbers use 2 bytes and thus you can only choose numbers from 0 to $2^{16}$. 
 
-`SALT` is the number of Salt Rounds that will be used to encrypt user passwords. `DATABASE_URL` is the connection url that MongoDB provides (make sure to change `&lt;password&gt;` for your database user password). 
+`SALT` is the number of Salt Rounds that will be used to encrypt user passwords. `DATABASE_URL` is the connection url that MongoDB provides (if you want to use MongoDB Atlas make sure to change `<password>` for your database user password). 
 
 Finally the `ACCESS_TOKEN_SECRET` is used internally by the server to manage JSONWebTokens (JWT). When using this service in production do not write a normal plain text secret (you don't need to memorize it), it is prefered to use a library that returns a random string in the environment that you prefer (Python, Node, etc).
 
