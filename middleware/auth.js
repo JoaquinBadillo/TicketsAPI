@@ -6,6 +6,9 @@ const authenticate = (req, res, next) => {
             return res.status(401).send({ message: 'Unauthorized' });
 
         req.userId = decoded.id;
+        console.log(decoded.id);
         next();
     });
 };
+
+module.exports = authenticate;
