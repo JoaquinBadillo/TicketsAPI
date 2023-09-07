@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 
 const ticketSchema = new mongoose.Schema({
+    id: {
+        type: Number,
+        required: true,
+        unique: true
+    },
+    
     title: {
         type: String,
         trim: true,
@@ -53,8 +59,8 @@ const ticketSchema = new mongoose.Schema({
         max: 64
     },
 
-    user: {
-        type: mongoose.Schema.Types.ObjectId,
+    userId: {
+        type: Number,
         ref: 'User',
         required: true
     },
