@@ -2,6 +2,7 @@ const Joi = require('joi');
 
 const registerValidation = (data) => {
     const schema = Joi.object({
+        id: Joi.number().required(),
         name: Joi.string().max(128).required(),
         email: Joi.string().min(6).max(128).required().email(),
         password: Joi.string().min(8).max(128).required(),
@@ -22,6 +23,7 @@ const loginValidation = (data) => {
 
 const ticketValidation = (data) => {
     const schema = Joi.object({
+        id: Joi.number(),
         title: Joi.string().max(128).required(),
         description: Joi.string().max(1024).required(),
         status: Joi.string().max(16).required(),
