@@ -7,6 +7,7 @@ dotenv.config();
 // API routes
 const userRouter = require('./routes/users');
 const ticketRouter = require('./routes/tickets');
+const reportRouter = require('./routes/reports');
 
 // Database connection
 mongoose.connect(
@@ -24,10 +25,10 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
-app.use(express.static('static'));
 
-app.use('/api/user', userRouter);
+app.use('/api/users', userRouter);
 app.use('/api/tickets', ticketRouter);
+app.use('/api/reports', reportRouter);
 
 const port = process.env.PORT || 1337;
 
