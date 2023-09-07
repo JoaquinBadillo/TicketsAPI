@@ -7,6 +7,30 @@ const { registerValidation, loginValidation} = require('../utils/validation');
 
 const saltRounds = parseInt(process.env.SALT_ROUNDS);
 
+router.get('/', async (req, res) => {
+    const data = await User
+    .find()
+    .select({_id: 0, id:1, name: 1, email: 1, role: 1});
+
+    if (!data)
+        return res.status(404).send({ message: 'No users found' });
+
+    res.set('Access-Control-Expose-Headers', 'Content-Range');
+    res.set('Content-Range', data.length);
+    res.send(data);
+});
+
+router.get('/:id', async (req, res) => {
+    const data = await User
+    .findOne({ id: req.params.id })
+    .select({ _id: 0, id: 1, name: 1, email: 1, role: 1 });
+
+    if (!data)
+        return res.status(404).send({ message: 'User not found' });
+
+    res.send(data);
+});
+
 router.post('/register', async (req, res) => {
     const { error } = registerValidation(req.body);
     
@@ -56,7 +80,7 @@ router.post('/login', async (req, res) => {
     if (!validPassword)
         return res.status(401).send({ message: 'Invalid Credentials' });
 
-    const token = jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: 86400 });
+    const token = jwt.sign({ id: user.id, role: user.role }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: 86400 });
 
     return res.header('x-access-token', token).send({ message: 'Logged in' });
 });

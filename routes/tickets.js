@@ -6,9 +6,27 @@ const authenticate = require('../middleware/auth');
 const { ticketValidation } = require('../utils/validation');
 
 router.get('/', async (req, res) => {
-    await Ticket.find()
-    .then((tickets) => res.send(tickets))
-    .catch((err) => res.status(400).send({message: err.message}));
+    const data = await Ticket
+    .find()
+    .select({_id: 0, id:1, title: 1, description: 1, userId: 1});
+
+    if (!data)
+        return res.status(404).send({ message: 'No tickets found' });
+
+    res.set('Access-Control-Expose-Headers', 'Content-Range');
+    res.set('Content-Range', data.length);
+    res.send(data);
+});
+
+router.get('/:id', async (req, res) => {
+    const data = await Ticket
+    .findOne({ id: req.params.id })
+    .select({ _id: 0, id: 1, title: 1, description: 1, userId: 1 });
+
+    if (!data)
+        return res.status(404).send({ message: 'Ticket not found' });
+
+    res.send(data);
 });
 
 router.post('/', authenticate, async (req, res) => {
@@ -18,6 +36,7 @@ router.post('/', authenticate, async (req, res) => {
         return res.status(400).send(error.details[0].message);
 
     const ticket = new Ticket({
+        id: req.body.id,
         title: req.body.title,
         description: req.body.description,
         status: req.body.status,
@@ -25,10 +44,11 @@ router.post('/', authenticate, async (req, res) => {
         category: req.body.category,
         incident: req.body.incident,
         location: req.body.location,
-        user: req.userId
+        userId: req.userId,
     });
 
-    await ticket.save()
+    await ticket
+    .save()
     .then((ticket) => res.send({savedTicket: ticket._id}))
     .catch((err) => res.status(400).send({message: err.message}));
 });
