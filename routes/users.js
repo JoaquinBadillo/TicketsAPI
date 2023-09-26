@@ -2,8 +2,8 @@ const router = require('express').Router();
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-
-const { registerValidation, loginValidation} = require('../utils/validation');
+const authenticate = require("../middleware/auth");
+const { registerValidation, loginValidation, accountValidation} = require('../utils/validation');
 
 const saltRounds = parseInt(process.env.SALT_ROUNDS);
 
@@ -85,6 +85,25 @@ router.post('/login', async (req, res) => {
     return res.header('x-access-token', token).send({ message: 'Logged in' });
 });
 
+router.put('/changepass', authenticate, async (req, res) => {
+    const { error } = accountValidation(req.body);
 
+    if (error != null)
+        return res.status(400).send(error.details[0].message);
+
+    const user = await bcrypt.genSalt(saltRounds)
+    .then(salt => bcrypt.hash(req.body.password, salt))
+    .then(hash => {
+        return User.findOneAndUpdate({ id: req.userId }, { password: hash });
+    })
+    .catch(err => { console.log(err) });
+
+    if (!user)
+        return res.status(500).send({ message: 'Password Change Failed' });
+
+    await user.save()
+    .then((usr) => res.send({savedUser: usr._id}))
+    .catch((err) => res.status(400).send({message: err.message}));
+});
 
 module.exports = router;

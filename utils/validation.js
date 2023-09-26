@@ -12,6 +12,15 @@ const registerValidation = (data) => {
     return schema.validate(data);
 };
 
+const accountValidation = (data) => {
+    const schema = Joi.object({
+        email: Joi.string().min(6).max(128).required().email(),
+        password: Joi.string().min(8).max(128).required()
+    });
+
+    return schema.validate(data);
+};
+
 const loginValidation = (data) => {
     const schema = Joi.object({
         email: Joi.string().min(6).max(128).required().email(),
@@ -38,6 +47,7 @@ const ticketValidation = (data) => {
 
 module.exports = {
     registerValidation,
+    accountValidation,
     loginValidation,
     ticketValidation
 };
