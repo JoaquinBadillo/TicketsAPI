@@ -7,11 +7,11 @@ const { ticketValidation } = require("../utils/validation");
 
 router.get("/", async (req, res) => {
   const data = await Ticket.find().select({
-    _id: 0,
-    id: 1,
+    _id: 1,
     title: 1,
     description: 1,
     userId: 1,
+    date: 1,
   });
 
   if (!data) return res.status(404).send({ message: "No tickets found" });
@@ -22,12 +22,13 @@ router.get("/", async (req, res) => {
 });
 
 router.get("/:id", async (req, res) => {
-  const data = await Ticket.findOne({ id: req.params.id }).select({
-    _id: 0,
-    id: 1,
+  const data = await Ticket.findOne({ _id: req.params.id }).select({
+    _id: 1,
     title: 1,
+    status: 1,
     description: 1,
     userId: 1,
+    date: 1,
   });
 
   if (!data) return res.status(404).send({ message: "Ticket not found" });
@@ -41,7 +42,6 @@ router.post("/", authenticate, async (req, res) => {
   if (error != null) return res.status(400).send(error.details[0].message);
 
   const ticket = new Ticket({
-    id: req.body.id,
     title: req.body.title,
     description: req.body.description,
     status: req.body.status || "Open",

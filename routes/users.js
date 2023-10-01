@@ -1,109 +1,119 @@
-const router = require('express').Router();
-const User = require('../models/User');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const router = require("express").Router();
+const User = require("../models/User");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const authenticate = require("../middleware/auth");
-const { registerValidation, loginValidation, accountValidation} = require('../utils/validation');
+const {
+  registerValidation,
+  loginValidation,
+  accountValidation,
+} = require("../utils/validation");
 
 const saltRounds = parseInt(process.env.SALT_ROUNDS);
 
-router.get('/', async (req, res) => {
-    const data = await User
-    .find()
-    .select({_id: 0, id:1, name: 1, email: 1, role: 1});
+router.get("/", async (req, res) => {
+  const data = await User.find().select({ _id: 1, name: 1, email: 1, role: 1 });
 
-    if (!data)
-        return res.status(404).send({ message: 'No users found' });
+  if (!data) return res.status(404).send({ message: "No users found" });
 
-    res.set('Access-Control-Expose-Headers', 'Content-Range');
-    res.set('Content-Range', data.length);
-    res.send(data);
+  res.set("Access-Control-Expose-Headers", "Content-Range");
+  res.set("Content-Range", data.length);
+  res.send(data);
 });
 
-router.get('/:id', async (req, res) => {
-    const data = await User
-    .findOne({ id: req.params.id })
-    .select({ _id: 0, id: 1, name: 1, email: 1, role: 1 });
+router.get("/:id", async (req, res) => {
+  const data = await User.findOne({ _id: req.params.id }).select({
+    _id: 1,
+    name: 1,
+    email: 1,
+    role: 1,
+  });
 
-    if (!data)
-        return res.status(404).send({ message: 'User not found' });
+  if (!data) return res.status(404).send({ message: "User not found" });
 
-    res.send(data);
+  res.send(data);
 });
 
-router.post('/register', async (req, res) => {
-    const { error } = registerValidation(req.body);
-    
-    if (error != null)
-        return res.status(400).send(error.details[0].message);
+router.post("/register", async (req, res) => {
+  const { error } = registerValidation(req.body);
 
-    const emailExists = await User.findOne({ email: req.body.email });
+  if (error != null) return res.status(400).send(error.details[0].message);
 
-    if (emailExists)
-        return res.status(400).send({ message: 'Email already exists' });
+  const emailExists = await User.findOne({ email: req.body.email });
 
-    const user = await bcrypt.genSalt(saltRounds)
-    .then(salt => bcrypt.hash(req.body.password, salt))
-    .then(hash => {
-        return new User({
-            name: req.body.name,
-            email: req.body.email,
-            password: hash,
-            role: req.body.role
-        });
+  if (emailExists)
+    return res.status(400).send({ message: "Email already exists" });
+
+  const user = await bcrypt
+    .genSalt(saltRounds)
+    .then((salt) => bcrypt.hash(req.body.password, salt))
+    .then((hash) => {
+      return new User({
+        name: req.body.name,
+        email: req.body.email,
+        password: hash,
+        role: req.body.role,
+      });
     })
-    .catch(err => { console.log(err) });
+    .catch((err) => {
+      console.log(err);
+    });
 
-    if (!user)
-        return res.status(500).send({ message: 'User Registration Failed' });
+  if (!user)
+    return res.status(500).send({ message: "User Registration Failed" });
 
-    await user.save()
-    .then((usr) => res.send({savedUser: usr._id}))
-    .catch((err) => res.status(400).send({message: err.message}));
+  await user
+    .save()
+    .then((usr) => res.send({ savedUser: usr._id }))
+    .catch((err) => res.status(400).send({ message: err.message }));
 });
 
-router.post('/login', async (req, res) => {
-    const { error } = loginValidation(req.body);
+router.post("/login", async (req, res) => {
+  const { error } = loginValidation(req.body);
 
-    if (error != null)
-        return res.status(400).send(error.details[0].message);
+  if (error != null) return res.status(400).send(error.details[0].message);
 
+  const user = await User.findOne({ email: req.body.email }).catch((err) => {
+    console.log(err);
+  });
 
-    const user = await User.findOne({ email: req.body.email })
-    .catch(err => { console.log(err) });
+  if (!user) return res.status(401).send({ message: "Invalid Credentials" });
 
-    if (!user) 
-        return res.status(401).send({ message: 'Invalid Credentials' });
+  const validPassword = await bcrypt.compare(req.body.password, user.password);
 
-    const validPassword = await bcrypt.compare(req.body.password, user.password);
+  if (!validPassword)
+    return res.status(401).send({ message: "Invalid Credentials" });
 
-    if (!validPassword)
-        return res.status(401).send({ message: 'Invalid Credentials' });
+  const token = jwt.sign(
+    { id: user._id, role: user.role },
+    process.env.ACCESS_TOKEN_SECRET,
+    { expiresIn: 86400 },
+  );
 
-    const token = jwt.sign({ id: user.id, role: user.role }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: 86400 });
-
-    return res.header('x-access-token', token).send({ message: 'Logged in' });
+  return res.header("x-access-token", token).send({ message: "Logged in" });
 });
 
-router.put('/changepass', authenticate, async (req, res) => {
-    const { error } = accountValidation(req.body);
+router.put("/changepass", authenticate, async (req, res) => {
+  const { error } = accountValidation(req.body);
 
-    if (error != null)
-        return res.status(400).send(error.details[0].message);
+  if (error != null) return res.status(400).send(error.details[0].message);
 
-    const user = await bcrypt.genSalt(saltRounds)
-    .then(salt => bcrypt.hash(req.body.password, salt))
-    .then(hash => {
-        return User.findOneAndUpdate({ id: req.userId }, { password: hash });
+  const user = await bcrypt
+    .genSalt(saltRounds)
+    .then((salt) => bcrypt.hash(req.body.password, salt))
+    .then((hash) => {
+      return User.findOneAndUpdate({ id: req.userId }, { password: hash });
     })
-    .catch(err => { console.log(err) });
+    .catch((err) => {
+      console.log(err);
+    });
 
-    if (!user)
-        return res.status(500).send({ message: 'Password Change Failed' });
+  if (!user) return res.status(500).send({ message: "Password Change Failed" });
 
-    await user.save()
-    .then((usr) => res.send({savedUser: usr._id}))
-    .catch((err) => res.status(400).send({message: err.message}));
+  await user
+    .save()
+    .then((usr) => res.send({ savedUser: usr._id }))
+    .catch((err) => res.status(400).send({ message: err.message }));
 });
 
 module.exports = router;
