@@ -43,9 +43,19 @@ const ticketValidation = (data) => {
   return schema.validate(data);
 };
 
+const ticketStatusValidation = (data) => {
+    const schema = Joi.object({
+        id: Joi.number(),
+        status: Joi.string().max(16).required()
+    });
+
+    return schema.validate(data);
+};
+
 module.exports = {
   registerValidation,
   accountValidation,
   loginValidation,
   ticketValidation,
+  ticketStatusValidation
 };
