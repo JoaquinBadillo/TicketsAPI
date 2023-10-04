@@ -3,7 +3,7 @@ const Ticket = require("../models/Ticket");
 
 const authenticate = require("../middleware/auth");
 
-const { ticketValidation } = require("../utils/validation");
+const { ticketValidation, ticketStatusValidation } = require("../utils/validation");
 
 router.get("/", async (req, res) => {
   const data = await Ticket.find().select({
@@ -56,6 +56,28 @@ router.post("/", authenticate, async (req, res) => {
     .save()
     .then((ticket) => res.send({ savedTicket: ticket._id }))
     .catch((err) => res.status(400).send({ message: err.message }));
+});
+
+router.put("/:id", authenticate, async (req, res) => {
+  const { error } = ticketStatusValidation(req.body);
+
+  if (error != null) return res.status(400).send(error.details[0].message);
+
+  if (req.role === "admin"){
+    const ticket = await Ticket.findOneAndUpdate({ id: req.body.id }, {status: req.body.status})
+    .save()
+    .then((ticket) => res.send({ updatedTicket: ticket.id }))
+    .catch((err) => res.status(400).send({ message: err.message }));
+  }
+  else{
+    const ticket = await Ticket.findOneAndUpdate({ id: req.body.id}, {status: req.body.status})
+    
+    if(req.userId !== ticket.userId) return res.status(403).send({message: "Forbidden"});
+    
+    ticket.save()
+    .then((ticket) => res.send({ updatedTicket: ticket.id }))
+    .catch((err) => res.status(400).send({ message: err.message }));
+  }
 });
 
 module.exports = router;
