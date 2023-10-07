@@ -90,7 +90,7 @@ router.post("/login", async (req, res) => {
     { expiresIn: 86400 },
   );
 
-  return res.header("x-access-token", token).send({ message: "Logged in" });
+  return res.send({ id: user._id, auth: token });
 });
 
 router.put("/changepass", authenticate, async (req, res) => {
