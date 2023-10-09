@@ -31,7 +31,11 @@ app.use("/api/reports", reportRouter);
 
 const port = process.env.PORT || 1337;
 
-https
+app.listen(port, () => {
+    console.log(`⚡ Server is running: http://localhost:${port}`);
+});
+
+/* https
   .createServer(
     {
       cert: fs.readFileSync(process.env.CERT_FILE || "backend.cer"),
@@ -42,3 +46,4 @@ https
   .listen(port, () => {
     console.log(`⚡ Server is running: https://localhost:${port}`);
   });
+*/
