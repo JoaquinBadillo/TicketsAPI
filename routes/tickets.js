@@ -3,16 +3,13 @@ const Ticket = require("../models/Ticket");
 
 const authenticate = require("../middleware/auth");
 
-const { ticketValidation, ticketStatusValidation } = require("../utils/validation");
+const {
+  ticketValidation,
+  ticketStatusValidation,
+} = require("../utils/validation");
 
 router.get("/", async (req, res) => {
-  const data = await Ticket.find().select({
-    _id: 1,
-    title: 1,
-    description: 1,
-    userId: 1,
-    date: 1,
-  });
+  const data = await Ticket.find();
 
   if (!data) return res.status(404).send({ message: "No tickets found" });
 
@@ -22,14 +19,7 @@ router.get("/", async (req, res) => {
 });
 
 router.get("/:id", async (req, res) => {
-  const data = await Ticket.findOne({ _id: req.params.id }).select({
-    _id: 1,
-    title: 1,
-    status: 1,
-    description: 1,
-    userId: 1,
-    date: 1,
-  });
+  const data = await Ticket.findOne({ _id: req.params.id });
 
   if (!data) return res.status(404).send({ message: "Ticket not found" });
 
@@ -63,20 +53,27 @@ router.put("/:id", authenticate, async (req, res) => {
 
   if (error != null) return res.status(400).send(error.details[0].message);
 
-  if (req.role === "admin"){
-    const ticket = await Ticket.findOneAndUpdate({ id: req.body.id }, {status: req.body.status})
-    .save()
-    .then((ticket) => res.send({ updatedTicket: ticket.id }))
-    .catch((err) => res.status(400).send({ message: err.message }));
-  }
-  else{
-    const ticket = await Ticket.findOneAndUpdate({ id: req.body.id}, {status: req.body.status})
-    
-    if(req.userId !== ticket.userId) return res.status(403).send({message: "Forbidden"});
-    
-    ticket.save()
-    .then((ticket) => res.send({ updatedTicket: ticket.id }))
-    .catch((err) => res.status(400).send({ message: err.message }));
+  if (req.role === "admin") {
+    const ticket = await Ticket.findOneAndUpdate(
+      { id: req.body.id },
+      { status: req.body.status }
+    )
+      .save()
+      .then((ticket) => res.send({ updatedTicket: ticket.id }))
+      .catch((err) => res.status(400).send({ message: err.message }));
+  } else {
+    const ticket = await Ticket.findOneAndUpdate(
+      { id: req.body.id },
+      { status: req.body.status }
+    );
+
+    if (req.userId !== ticket.userId)
+      return res.status(403).send({ message: "Forbidden" });
+
+    ticket
+      .save()
+      .then((ticket) => res.send({ updatedTicket: ticket.id }))
+      .catch((err) => res.status(400).send({ message: err.message }));
   }
 });
 
