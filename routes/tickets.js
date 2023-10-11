@@ -5,7 +5,7 @@ const authenticate = require("../middleware/auth");
 
 const {
   ticketValidation,
-  ticketStatusValidation,
+  ticketUpdateValidation,
 } = require("../utils/validation");
 
 router.get("/", async (req, res) => {
@@ -34,7 +34,7 @@ router.post("/", authenticate, async (req, res) => {
   const ticket = new Ticket({
     title: req.body.title,
     description: req.body.description,
-    status: req.body.status || "Open",
+    status: req.body.status || "Abierto",
     priority: req.body.priority,
     category: req.body.category,
     incident: req.body.incident,
@@ -49,31 +49,26 @@ router.post("/", authenticate, async (req, res) => {
 });
 
 router.put("/:id", authenticate, async (req, res) => {
-  const { error } = ticketStatusValidation(req.body);
+  const { error } = ticketUpdateValidation(req.body);
 
-  if (error != null) return res.status(400).send(error.details[0].message);
 
-  if (req.role === "admin") {
+  if (error != null) {
+    console.log(error);
+    return res.status(400).send(error.details[0].message);
+  }
+
+  try {
     const ticket = await Ticket.findOneAndUpdate(
-      { id: req.body.id },
-      { status: req.body.status }
-    )
-      .save()
-      .then((ticket) => res.send({ updatedTicket: ticket.id }))
-      .catch((err) => res.status(400).send({ message: err.message }));
-  } else {
-    const ticket = await Ticket.findOneAndUpdate(
-      { id: req.body.id },
-      { status: req.body.status }
+      { _id: req.params.id },
+      {...req.body, last_update: Date.now()},
+      { new: true } // Return updated document
     );
-
-    if (req.userId !== ticket.userId)
-      return res.status(403).send({ message: "Forbidden" });
-
-    ticket
-      .save()
-      .then((ticket) => res.send({ updatedTicket: ticket.id }))
-      .catch((err) => res.status(400).send({ message: err.message }));
+    
+    return res.status(200).send({ id: ticket._id });
+  } 
+  
+  catch (err) {
+    return res.status(400).send({ message: "No se pudo actualizar" });
   }
 });
 

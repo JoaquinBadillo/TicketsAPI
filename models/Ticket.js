@@ -63,6 +63,12 @@ const ticketSchema = new mongoose.Schema({
     default: Date.now,
     required: true,
   },
+
+  last_update: {
+    type: Date,
+    default: Date.now,
+    required: true,
+  }
 });
 
 module.exports = mongoose.model("Ticket", ticketSchema);

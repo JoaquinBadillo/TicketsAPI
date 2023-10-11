@@ -29,6 +29,17 @@ app.use("/api/users", userRouter);
 app.use("/api/tickets", ticketRouter);
 app.use("/api/reports", reportRouter);
 
+// 404 handler
+app.use(function(_req, res, _next) {
+  return res.status(404).send({ message: "Recurso no encontrado"});
+});
+
+// 500 handler
+app.use(function(err, _req, res, _next) {
+  console.log(err);
+  return res.status(500).send({ message: "Error de servidor" });
+});
+
 const port = process.env.PORT || 1337;
 
 app.listen(port, () => {
