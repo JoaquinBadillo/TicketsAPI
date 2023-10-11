@@ -60,8 +60,8 @@ router.put("/:id", authenticate, async (req, res) => {
   try {
     const ticket = await Ticket.findOneAndUpdate(
       { _id: req.params.id },
-      req.body,
-      { new: true }
+      {...req.body, last_update: Date.now()},
+      { new: true } // Return updated document
     );
     
     return res.status(200).send({ id: ticket._id });

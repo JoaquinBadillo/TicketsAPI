@@ -56,6 +56,7 @@ const ticketUpdateValidation = (data) => {
       location: Joi.string().max(64),
       userId: Joi.string(),
       date: Joi.date(),
+      last_update: Joi.date(),
       __v: Joi.number(),
     });
 
