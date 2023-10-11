@@ -43,10 +43,20 @@ const ticketValidation = (data) => {
   return schema.validate(data);
 };
 
-const ticketStatusValidation = (data) => {
+const ticketUpdateValidation = (data) => {
     const schema = Joi.object({
-        id: Joi.number(),
-        status: Joi.string().max(16).required()
+      _id: Joi.string(),
+      id: Joi.string(),
+      title: Joi.string().max(128),
+      description: Joi.string().max(1024),
+      status: Joi.string().max(16),
+      priority: Joi.string().max(8),
+      category: Joi.string().max(64),
+      incident: Joi.string().max(64),
+      location: Joi.string().max(64),
+      userId: Joi.string(),
+      date: Joi.date(),
+      __v: Joi.number(),
     });
 
     return schema.validate(data);
@@ -57,5 +67,5 @@ module.exports = {
   accountValidation,
   loginValidation,
   ticketValidation,
-  ticketStatusValidation
+  ticketUpdateValidation
 };
