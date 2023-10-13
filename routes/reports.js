@@ -1,9 +1,10 @@
 const router = require("express").Router();
 const Ticket = require("../models/Ticket");
 
-// const authenticate = require('../middleware/auth');
+const authenticate = require('../middleware/auth');
+const {hasRole, adminRole} = require("../middleware/role");
 
-router.get("/status", async (_req, res) => {
+router.get("/status", authenticate, hasRole(adminRole), async (_req, res) => {
   const currentDate = new Date();
   const startDate = new Date(currentDate.getFullYear(), 0, 1);
   const days = Math.floor((currentDate - startDate) / (24 * 60 * 60 * 1000));
@@ -29,7 +30,7 @@ router.get("/status", async (_req, res) => {
   res.send(data);
 });
 
-router.get("/incidents", async (_req, res) => {
+router.get("/incidents", authenticate, hasRole(adminRole), async (_req, res) => {
   const currentDate = new Date();
   const startDate = new Date(currentDate.getFullYear(), 0, 1);
   const days = Math.floor((currentDate - startDate) / (24 * 60 * 60 * 1000));
@@ -54,7 +55,7 @@ router.get("/incidents", async (_req, res) => {
   res.send(data);
 });
 
-router.get("/location", async (_req, res) => {
+router.get("/location", authenticate, hasRole(adminRole), async (_req, res) => {
   const currentDate = new Date();
   const startDate = new Date(currentDate.getFullYear(), 0, 1);
   const days = Math.floor((currentDate - startDate) / (24 * 60 * 60 * 1000));

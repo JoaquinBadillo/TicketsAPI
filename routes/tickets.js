@@ -8,21 +8,31 @@ const {
   ticketUpdateValidation,
 } = require("../utils/validation");
 
-router.get("/", async (req, res) => {
-  const data = await Ticket.find();
+router.get("/", authenticate, async (req, res) => {
+  let data;
+
+  if (req.userRole !== "admin")
+    data = await Ticket.find({userId: req.userId});
+  else
+    data = await Ticket.find();
 
   if (!data) return res.status(404).send({ message: "No tickets found" });
 
   res.set("Access-Control-Expose-Headers", "Content-Range");
   res.set("Content-Range", data.length);
+
   res.send(data);
 });
 
-router.get("/:id", async (req, res) => {
+router.get("/:id", authenticate, async (req, res) => {
   const data = await Ticket.findOne({ _id: req.params.id });
-
-  if (!data) return res.status(404).send({ message: "Ticket not found" });
-
+  
+  if (!data) 
+    return res.status(404).send({ message: "Ticket not found" });
+  
+  if (req.userRole !== "admin" && data.userId !== data.userId)
+    return res.status(403).send({ message: "Forbidden"});
+  
   res.send(data);
 });
 
@@ -51,12 +61,19 @@ router.post("/", authenticate, async (req, res) => {
 router.put("/:id", authenticate, async (req, res) => {
   const { error } = ticketUpdateValidation(req.body);
 
-
-  if (error != null) {
-    console.log(error);
+  if (error != null)
     return res.status(400).send(error.details[0].message);
-  }
 
+  if (req.userRole !== "admin") {
+    const ticket = await Ticket.findOne({ _id: req.params.id });
+
+    if (!ticket)
+      return res.status(404).send({ message: "Ticket not found" });
+
+    if (ticket.userId.valueOf() !== req.userId)
+      return res.status(403).send({ message: "Forbidden" });
+  }
+  
   try {
     const ticket = await Ticket.findOneAndUpdate(
       { _id: req.params.id },

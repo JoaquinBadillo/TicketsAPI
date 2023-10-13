@@ -3,6 +3,8 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const authenticate = require("../middleware/auth");
+const {hasRole, adminRole} = require("../middleware/role");
+
 const {
   registerValidation,
   loginValidation,
@@ -11,8 +13,13 @@ const {
 
 const saltRounds = parseInt(process.env.SALT_ROUNDS);
 
-router.get("/", async (req, res) => {
-  const data = await User.find().select({ _id: 1, name: 1, email: 1, role: 1 });
+router.get("/", authenticate, hasRole(adminRole), async (req, res) => {
+  const data = await User.find().select({ 
+    _id: 1, 
+    name: 1, 
+    email: 1, 
+    role: 1
+  });
 
   if (!data) return res.status(404).send({ message: "No users found" });
 
@@ -21,7 +28,7 @@ router.get("/", async (req, res) => {
   res.send(data);
 });
 
-router.get("/:id", async (req, res) => {
+router.get("/:id", authenticate, hasRole(adminRole), async (req, res) => {
   const data = await User.findOne({ _id: req.params.id }).select({
     _id: 1,
     name: 1,
@@ -34,10 +41,13 @@ router.get("/:id", async (req, res) => {
   res.send(data);
 });
 
-router.post("/register", async (req, res) => {
+router.post("/", authenticate, hasRole(adminRole), async (req, res) => {
   const { error } = registerValidation(req.body);
 
-  if (error != null) return res.status(400).send(error.details[0].message);
+  if (error != null)  { 
+    console.log(error.details[0].message);
+    return res.status(400).send(error.details[0].message);
+  }
 
   const emailExists = await User.findOne({ email: req.body.email });
 
@@ -71,7 +81,8 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
   const { error } = loginValidation(req.body);
 
-  if (error != null) return res.status(400).send(error.details[0].message);
+  if (error != null)
+    return res.status(400).send(error.details[0].message);
 
   const user = await User.findOne({ email: req.body.email }).catch((err) => {
     console.log(err);
@@ -90,7 +101,7 @@ router.post("/login", async (req, res) => {
     { expiresIn: 86400 },
   );
 
-  return res.send({ id: user._id, auth: token });
+  return res.send({ id: user._id, auth: token, role: user.role });
 });
 
 router.put("/changepass", authenticate, async (req, res) => {
@@ -98,22 +109,37 @@ router.put("/changepass", authenticate, async (req, res) => {
 
   if (error != null) return res.status(400).send(error.details[0].message);
 
-  const user = await bcrypt
-    .genSalt(saltRounds)
-    .then((salt) => bcrypt.hash(req.body.password, salt))
-    .then((hash) => {
-      return User.findOneAndUpdate({ id: req.userId }, { password: hash });
-    })
-    .catch((err) => {
-      console.log(err);
-    });
+  try {
+    const user = await bcrypt
+      .genSalt(saltRounds)
+      .then((salt) => bcrypt.hash(req.body.password, salt))
+      .then((hash) => {
+        return User.findOneAndUpdate({ id: req.userId }, { password: hash });
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+    
+    if (!user) 
+      return res.status(404).send({ message: "Password Change Failed" });
+    
+    await user
+      .save()
+      .then((usr) => res.send({ savedUser: usr._id }))
+      .catch((err) => res.status(400).send({ message: err.message }));
+  } catch (err) {
+    return res.status(400).send({ message: "Password Change Failed" });
+  }
+});
 
-  if (!user) return res.status(500).send({ message: "Password Change Failed" });
+router.get("/role", authenticate, async (req, res) => {
+  const user = await User.findOne({ _id: req.userId }).catch((err) => {
+    console.log(err);
+  });
 
-  await user
-    .save()
-    .then((usr) => res.send({ savedUser: usr._id }))
-    .catch((err) => res.status(400).send({ message: err.message }));
+  if (!user) return res.status(404).send({ message: "User not found" });
+
+  res.send({ role: user.role });
 });
 
 module.exports = router;
