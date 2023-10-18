@@ -3,25 +3,29 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const authenticate = require("../middleware/auth");
-const {hasRole, adminRole} = require("../middleware/role");
+const { hasRole, adminRole } = require("../middleware/role");
 
 const {
   registerValidation,
   loginValidation,
   accountValidation,
 } = require("../utils/validation");
+const logger = require("../utils/logger");
 
 const saltRounds = parseInt(process.env.SALT_ROUNDS);
 
 router.get("/", authenticate, hasRole(adminRole), async (req, res) => {
-  const data = await User.find().select({ 
-    _id: 1, 
-    name: 1, 
-    email: 1, 
-    role: 1
+  const data = await User.find().select({
+    _id: 1,
+    name: 1,
+    email: 1,
+    role: 1,
   });
 
-  if (!data) return res.status(404).send({ message: "No users found" });
+  if (!data) {
+    logger.error("No users found in get request");
+    return res.status(404).send({ message: "No users found" });
+  }
 
   res.set("Access-Control-Expose-Headers", "Content-Range");
   res.set("Content-Range", data.length);
@@ -36,7 +40,10 @@ router.get("/:id", authenticate, hasRole(adminRole), async (req, res) => {
     role: 1,
   });
 
-  if (!data) return res.status(404).send({ message: "User not found" });
+  if (!data) {
+    logger.error("User not found in get request /:id");
+    return res.status(404).send({ message: "User not found" });
+  }
 
   res.send(data);
 });
@@ -44,15 +51,17 @@ router.get("/:id", authenticate, hasRole(adminRole), async (req, res) => {
 router.post("/", authenticate, hasRole(adminRole), async (req, res) => {
   const { error } = registerValidation(req.body);
 
-  if (error != null)  { 
-    console.log(error.details[0].message);
+  if (error != null) {
+    logger.error(error.details[0].message);
     return res.status(400).send(error.details[0].message);
   }
 
   const emailExists = await User.findOne({ email: req.body.email });
 
-  if (emailExists)
+  if (emailExists) {
+    logger.error(`Email already exists in post request: ${emailExists.email}`);
     return res.status(400).send({ message: "Email already exists" });
+  }
 
   const user = await bcrypt
     .genSalt(saltRounds)
@@ -66,11 +75,13 @@ router.post("/", authenticate, hasRole(adminRole), async (req, res) => {
       });
     })
     .catch((err) => {
-      console.log(err);
+      logger.error(err);
     });
 
-  if (!user)
+  if (!user) {
+    logger.error(`User Registration failed for user: ${req.body.name}`);
     return res.status(500).send({ message: "User Registration Failed" });
+  }
 
   await user
     .save()
@@ -81,24 +92,32 @@ router.post("/", authenticate, hasRole(adminRole), async (req, res) => {
 router.post("/login", async (req, res) => {
   const { error } = loginValidation(req.body);
 
-  if (error != null)
+  if (error != null) {
+    logger.error(error.details[0].message);
     return res.status(400).send(error.details[0].message);
+  }
 
   const user = await User.findOne({ email: req.body.email }).catch((err) => {
+    logger.error(err);
     console.log(err);
   });
 
-  if (!user) return res.status(401).send({ message: "Invalid Credentials" });
+  if (!user) {
+    logger.error(`User not found in login request: ${req.body.email}`);
+    return res.status(401).send({ message: "Invalid Credentials" });
+  }
 
   const validPassword = await bcrypt.compare(req.body.password, user.password);
 
-  if (!validPassword)
+  if (!validPassword) {
+    logger.error(`Invalid Password in login request: ${req.body.email}`);
     return res.status(401).send({ message: "Invalid Credentials" });
+  }
 
   const token = jwt.sign(
     { id: user._id, role: user.role },
     process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: 86400 },
+    { expiresIn: 86400 }
   );
 
   return res.send({ id: user._id, auth: token, role: user.role });
@@ -107,7 +126,10 @@ router.post("/login", async (req, res) => {
 router.put("/changepass", authenticate, async (req, res) => {
   const { error } = accountValidation(req.body);
 
-  if (error != null) return res.status(400).send(error.details[0].message);
+  if (error != null) {
+    logger.error(error.details[0].message);
+    return res.status(400).send(error.details[0].message);
+  }
 
   try {
     const user = await bcrypt
@@ -118,16 +140,23 @@ router.put("/changepass", authenticate, async (req, res) => {
       })
       .catch((err) => {
         console.log(err);
+        logger.error(err);
       });
-    
-    if (!user) 
+
+    if (!user) {
+      logger.error(`Password Change Failed for user: ${req.body.name}`);
       return res.status(404).send({ message: "Password Change Failed" });
-    
+    }
+
     await user
       .save()
       .then((usr) => res.send({ savedUser: usr._id }))
-      .catch((err) => res.status(400).send({ message: err.message }));
+      .catch((err) => {
+        console.log(err);
+        res.status(400).send({ message: err.message });
+      });
   } catch (err) {
+    console.log(err);
     return res.status(400).send({ message: "Password Change Failed" });
   }
 });
@@ -137,7 +166,10 @@ router.get("/role", authenticate, async (req, res) => {
     console.log(err);
   });
 
-  if (!user) return res.status(404).send({ message: "User not found" });
+  if (!user) {
+    logger.error(`User not found in get request /role: ${req.userId}`);
+    return res.status(404).send({ message: "User not found" });
+  }
 
   res.send({ role: user.role });
 });

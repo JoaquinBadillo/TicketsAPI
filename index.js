@@ -14,8 +14,11 @@ const reportRouter = require("./routes/reports");
 // Database connection
 mongoose.connect(process.env.DATABASE_URL, { useNewUrlParser: true });
 
+// Logger
+const logger = require("./utils/logger");
+
 const db = mongoose.connection;
-db.on("error", (error) => console.error(error));
+db.on("error", (error) => (console.error(error), logger.error(error)));
 db.once("open", () => console.log("💾 Connected to Database"));
 
 // Express app
@@ -30,20 +33,23 @@ app.use("/api/tickets", ticketRouter);
 app.use("/api/reports", reportRouter);
 
 // 404 handler
-app.use(function(_req, res, _next) {
-  return res.status(404).send({ message: "Recurso no encontrado"});
+app.use(function (_req, res, _next) {
+  logger.error("Recurso no encontrado");
+  return res.status(404).send({ message: "Recurso no encontrado" });
 });
 
 // 500 handler
-app.use(function(err, _req, res, _next) {
+app.use(function (err, _req, res, _next) {
   console.log(err);
+  logger.error(err);
   return res.status(500).send({ message: "Error de servidor" });
 });
 
 const port = process.env.PORT || 1337;
 
 app.listen(port, () => {
-    console.log(`⚡ Server is running: http://localhost:${port}`);
+  //console.log(`⚡ Server is running: http://localhost:${port}`);
+  logger.info(`⚡ Server is running: http://localhost:${port}`);
 });
 
 /* https
