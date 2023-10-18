@@ -9,6 +9,7 @@ const {
   registerValidation,
   loginValidation,
   accountValidation,
+  userUpdateValidation
 } = require("../utils/validation");
 const logger = require("../utils/logger");
 
@@ -123,6 +124,34 @@ router.post("/login", async (req, res) => {
   );
 
   return res.send({ id: user._id, auth: token, role: user.role });
+});
+
+router.put("/:id", authenticate, async (req, res) => {
+  const { error } = userUpdateValidation(req.body);
+
+  if (error != null) {
+    logger.error(error.details[0].message);
+    return res.status(400).send(error.details[0].message);
+  }
+
+  try {
+    if (req.body._id != null) delete req.body._id;
+    if (req.body.id != null) delete req.body.id;
+    if (req.body.__v != null) delete req.body.__v;
+    if (req.body.password != null) delete req.body.password;
+    if (req.body.role != null) delete req.body.role;
+
+    const user = await User.findOneAndUpdate(
+      { _id: req.params.id },
+      { ...req.body },
+      { new: true } // Return updated document
+    );
+
+    return res.status(200).send({ id: user._id });
+  } catch (err) {
+    logger.error(`Error in put request for user /:id ${req.params.id}`);
+    return res.status(400).send({ message: "No se pudo actualizar ticket" });
+  }
 });
 
 router.put("/changepass", authenticate, async (req, res) => {
