@@ -12,9 +12,36 @@ const logger = require("../utils/logger");
 router.get("/", authenticate, async (req, res) => {
   let data;
 
-  if (req.userRole !== "admin")
-    data = await Ticket.find({ userId: req.userId });
-  else data = await Ticket.find();
+  if (req.userRole !== "admin") {
+    data = await Ticket.find({ userId: req.userId }).select({
+      _id: 1,
+      title: 1,
+      folio: 1,
+      description: 1,
+      status: 1,
+      priority: 1,
+      category: 1,
+      incident: 1,
+      location: 1,
+      date: 1,
+      last_update: 1,
+    });
+  } else {
+    data = await Ticket.find().select({
+      _id: 1,
+      title: 1,
+      description: 1,
+      status: 1,
+      folio: 1,
+      priority: 1,
+      category: 1,
+      incident: 1,
+      location: 1,
+      userId: 1,
+      date: 1,
+      last_update: 1,
+    });
+  }
 
   if (!data) return res.status(404).send({ message: "No tickets found" });
 
@@ -25,7 +52,20 @@ router.get("/", authenticate, async (req, res) => {
 });
 
 router.get("/:id", authenticate, async (req, res) => {
-  const data = await Ticket.findOne({ _id: req.params.id });
+  const data = await Ticket.findOne({ _id: req.params.id }).select({
+    _id: 1,
+    title: 1,
+    description: 1,
+    status: 1,
+    folio: 1,
+    priority: 1,
+    category: 1,
+    incident: 1,
+    location: 1,
+    userId: req.userRole === "admin" ? 1 : 0,
+    date: 1,
+    last_update: 1,
+  });
 
   if (!data) {
     logger.error(`Ticket not found in get request /:id ${req.params.id}`);
@@ -55,6 +95,7 @@ router.post("/", authenticate, async (req, res) => {
     priority: req.body.priority,
     category: req.body.category,
     incident: req.body.incident,
+    folio: req.body.folio,
     location: req.body.location,
     userId: req.userId,
   });
@@ -88,6 +129,14 @@ router.put("/:id", authenticate, async (req, res) => {
   }
 
   try {
+    // Drop content that should not be edited.
+    // (React Admin sends all this data back, that's why Joi is insufficient)
+    if (req.body._id != null) delete req.body._id;
+
+    if (req.body.id != null) delete req.body.id;
+
+    if (req.body.__v != null) delete req.body.__v;
+
     const ticket = await Ticket.findOneAndUpdate(
       { _id: req.params.id },
       { ...req.body, last_update: Date.now() },

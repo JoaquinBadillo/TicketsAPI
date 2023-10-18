@@ -86,7 +86,9 @@ router.post("/", authenticate, hasRole(adminRole), async (req, res) => {
   await user
     .save()
     .then((usr) => res.send({ savedUser: usr._id }))
-    .catch((err) => res.status(400).send({ message: err.message }));
+    .catch((err) => {
+      res.status(400).send({ message: err.message })
+    });
 });
 
 router.post("/login", async (req, res) => {
