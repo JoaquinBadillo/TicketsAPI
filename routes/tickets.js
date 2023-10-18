@@ -17,6 +17,7 @@ router.get("/", authenticate, async (req, res) => {
       .select({
         _id: 1, 
         title: 1, 
+        folio: 1,
         description: 1, 
         status: 1,
         priority: 1,
@@ -35,6 +36,7 @@ router.get("/", authenticate, async (req, res) => {
         title: 1, 
         description: 1, 
         status: 1,
+        folio: 1,
         priority: 1,
         category: 1,
         incident: 1,
@@ -61,6 +63,7 @@ router.get("/:id", authenticate, async (req, res) => {
       title: 1, 
       description: 1, 
       status: 1,
+      folio: 1,
       priority: 1,
       category: 1,
       incident: 1,
