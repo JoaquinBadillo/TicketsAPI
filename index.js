@@ -12,7 +12,10 @@ const ticketRouter = require("./routes/tickets");
 const reportRouter = require("./routes/reports");
 
 // Database connection
-mongoose.connect(process.env.DATABASE_URL, { useNewUrlParser: true });
+mongoose.connect(
+  process.env.DATABASE_URL, 
+  { useUnifiedTopology: true, useNewUrlParser: true }
+);
 
 // Logger
 const logger = require("./utils/logger");
