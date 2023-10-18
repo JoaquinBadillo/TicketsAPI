@@ -6,8 +6,6 @@ const sanitize = (req, res, next) => {
     request[key] = sanitizer.escape(request[key]);
   }
 
-  console.log(request);
-
   next();
 };
 

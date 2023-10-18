@@ -64,10 +64,25 @@ const ticketUpdateValidation = (data) => {
     return schema.validate(data);
 };
 
+const userUpdateValidation = (data) => {
+  const schema = Joi.object({
+    _id: Joi.string(),
+    id: Joi.string(),
+    name: Joi.string().max(128),
+    email: Joi.string().min(6).max(128).email(),
+    password: Joi.string().min(8).max(128),
+    role: Joi.string().max(64),
+    __v: Joi.number(),
+  });
+
+  return schema.validate(data);
+}
+
 module.exports = {
   registerValidation,
   accountValidation,
   loginValidation,
   ticketValidation,
-  ticketUpdateValidation
+  ticketUpdateValidation,
+  userUpdateValidation
 };
