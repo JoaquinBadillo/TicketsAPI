@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const Ticket = require("../models/Ticket");
+const sanitizer = require("../middleware/sanitize");
 
 const authenticate = require("../middleware/auth");
 
@@ -9,7 +10,7 @@ const {
 } = require("../utils/validation");
 const logger = require("../utils/logger");
 
-router.get("/", authenticate, async (req, res) => {
+router.get("/", authenticate, sanitizer, async (req, res) => {
   let data;
 
   if (req.userRole !== "admin") {
@@ -51,7 +52,7 @@ router.get("/", authenticate, async (req, res) => {
   res.send(data);
 });
 
-router.get("/:id", authenticate, async (req, res) => {
+router.get("/:id", authenticate, sanitizer, async (req, res) => {
   const data = await Ticket.findOne({ _id: req.params.id }).select({
     _id: 1,
     title: 1,
@@ -80,7 +81,7 @@ router.get("/:id", authenticate, async (req, res) => {
   res.send(data);
 });
 
-router.post("/", authenticate, async (req, res) => {
+router.post("/", authenticate, sanitizer, async (req, res) => {
   const { error } = ticketValidation(req.body);
 
   if (error != null) {
@@ -109,7 +110,7 @@ router.post("/", authenticate, async (req, res) => {
     });
 });
 
-router.put("/:id", authenticate, async (req, res) => {
+router.put("/:id", authenticate, sanitizer, async (req, res) => {
   const { error } = ticketUpdateValidation(req.body);
 
   if (error != null) return res.status(400).send(error.details[0].message);
