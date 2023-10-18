@@ -138,7 +138,7 @@ router.put("/changepass", authenticate, async (req, res) => {
       .genSalt(saltRounds)
       .then((salt) => bcrypt.hash(req.body.password, salt))
       .then((hash) => {
-        return User.findOneAndUpdate({ id: req.userId }, { password: hash });
+        return User.findOneAndUpdate({ _id: req.userId }, { password: hash });
       })
       .catch((err) => {
         console.log(err);
@@ -152,7 +152,10 @@ router.put("/changepass", authenticate, async (req, res) => {
 
     await user
       .save()
-      .then((usr) => res.send({ savedUser: usr._id }))
+      .then((usr) => {
+        logger.info(`Password Changed for user: ${user.name}`);
+        res.send({ savedUser: usr._id })
+      })
       .catch((err) => {
         console.log(err);
         res.status(400).send({ message: err.message });
