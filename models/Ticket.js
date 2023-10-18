@@ -17,6 +17,12 @@ const ticketSchema = new mongoose.Schema({
     max: 1024,
   },
 
+  folio: {
+    type: String,
+    trim: true,
+    max: 32,
+  },
+
   status: {
     type: String,
     trim: true,

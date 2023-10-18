@@ -39,7 +39,10 @@ router.get("/:id", authenticate, async (req, res) => {
 router.post("/", authenticate, async (req, res) => {
   const { error } = ticketValidation(req.body);
 
-  if (error != null) return res.status(400).send(error.details[0].message);
+  if (error != null) {
+    console.log(error.details[0].message);
+    return res.status(400).send(error.details[0].message);
+  }
 
   const ticket = new Ticket({
     title: req.body.title,
@@ -48,6 +51,7 @@ router.post("/", authenticate, async (req, res) => {
     priority: req.body.priority,
     category: req.body.category,
     incident: req.body.incident,
+    folio: req.body.folio,
     location: req.body.location,
     userId: req.userId,
   });

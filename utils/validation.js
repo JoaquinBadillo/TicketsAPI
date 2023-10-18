@@ -37,6 +37,7 @@ const ticketValidation = (data) => {
     priority: Joi.string().max(8).required(),
     category: Joi.string().max(64).required(),
     incident: Joi.string().max(64).required(),
+    folio: Joi.string().max(64),
     location: Joi.string().max(64).required(),
   });
 
@@ -54,6 +55,7 @@ const ticketUpdateValidation = (data) => {
       category: Joi.string().max(64),
       incident: Joi.string().max(64),
       location: Joi.string().max(64),
+      folio: Joi.string(),
       userId: Joi.string(),
       date: Joi.date(),
       last_update: Joi.date(),
