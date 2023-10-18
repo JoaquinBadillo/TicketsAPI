@@ -43,9 +43,8 @@ router.get("/:id", authenticate, hasRole(adminRole), async (req, res) => {
 
 router.post("/", authenticate, hasRole(adminRole), async (req, res) => {
   const { error } = registerValidation(req.body);
-
+  
   if (error != null)  { 
-    console.log(error.details[0].message);
     return res.status(400).send(error.details[0].message);
   }
 
@@ -71,11 +70,13 @@ router.post("/", authenticate, hasRole(adminRole), async (req, res) => {
 
   if (!user)
     return res.status(500).send({ message: "User Registration Failed" });
-
+  
   await user
     .save()
     .then((usr) => res.send({ savedUser: usr._id }))
-    .catch((err) => res.status(400).send({ message: err.message }));
+    .catch((err) => {
+      res.status(400).send({ message: err.message })
+    });
 });
 
 router.post("/login", async (req, res) => {
