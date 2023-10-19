@@ -147,6 +147,48 @@ router.post("/login", sanitizer, async (req, res) => {
   return res.send({ id: user._id, auth: token, role: user.role });
 });
 
+router.put("/changepass", authenticate, async (req, res) => {
+  const { error } = accountValidation(req.body);
+
+  if (error != null) {
+    logger.error(error.details[0].message);
+    return res.status(400).send(error.details[0].message);
+  }
+
+  try {
+    const user = await bcrypt
+      .genSalt(saltRounds)
+      .then((salt) => bcrypt.hash(req.body.password, salt))
+      .then((hash) => {
+        return User.findOneAndUpdate({ _id: req.userId }, { password: hash });
+      })
+      .catch((err) => {
+        console.log(err);
+        logger.error(err);
+      });
+
+    if (!user) {
+      logger.error(`Password Change Failed. UserID: ${req.userId}`);
+      return res.status(404).send({ message: "Password Change Failed" });
+    }
+
+    await user
+      .save()
+      .then((usr) => {
+        logger.info(`Password Changed for user: ${user.name}`);
+        res.send({ savedUser: usr._id })
+      })
+      .catch((err) => {
+        console.log(err);
+        res.status(400).send({ message: err.message });
+      });
+  } catch (err) {
+    console.log(err);
+    return res.status(400).send({ message: "Password Change Failed" });
+  }
+});
+
+
 router.put("/:id", authenticate, sanitizer, async (req, res) => {
   const { error } = userUpdateValidation(req.body);
 
@@ -172,47 +214,6 @@ router.put("/:id", authenticate, sanitizer, async (req, res) => {
   } catch (err) {
     logger.error(`Error in put request for user /:id ${req.params.id}`);
     return res.status(400).send({ message: "No se pudo actualizar ticket" });
-  }
-});
-
-router.put("/changepass", authenticate, sanitizer, async (req, res) => {
-  const { error } = accountValidation(req.body);
-
-  if (error != null) {
-    logger.error(error.details[0].message);
-    return res.status(400).send(error.details[0].message);
-  }
-
-  try {
-    const user = await bcrypt
-      .genSalt(saltRounds)
-      .then((salt) => bcrypt.hash(req.body.password, salt))
-      .then((hash) => {
-        return User.findOneAndUpdate({ _id: req.userId }, { password: hash });
-      })
-      .catch((err) => {
-        console.log(err);
-        logger.error(err);
-      });
-
-    if (!user) {
-      logger.error(`Password Change Failed for user: ${req.body.name}`);
-      return res.status(404).send({ message: "Password Change Failed" });
-    }
-
-    await user
-      .save()
-      .then((usr) => {
-        logger.info(`Password Changed for user: ${user.name}`);
-        res.send({ savedUser: usr._id });
-      })
-      .catch((err) => {
-        console.log(err);
-        res.status(400).send({ message: err.message });
-      });
-  } catch (err) {
-    console.log(err);
-    return res.status(400).send({ message: "Password Change Failed" });
   }
 });
 
