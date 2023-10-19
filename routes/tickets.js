@@ -24,6 +24,7 @@ router.get("/", authenticate, sanitizer, async (req, res) => {
       category: 1,
       incident: 1,
       location: 1,
+      userId: 1,
       date: 1,
       last_update: 1,
     });
@@ -63,7 +64,7 @@ router.get("/:id", authenticate, sanitizer, async (req, res) => {
     category: 1,
     incident: 1,
     location: 1,
-    userId: req.userRole === "admin" ? 1 : 0,
+    userId: 1,
     date: 1,
     last_update: 1,
   });
