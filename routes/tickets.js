@@ -112,9 +112,15 @@ router.post("/", authenticate, sanitizer, async (req, res) => {
 });
 
 router.put("/:id", authenticate, sanitizer, async (req, res) => {
+  if (req.body?.folio == null ||  req.body?.folio == "")
+    req.body.folio = " ";
+
   const { error } = ticketUpdateValidation(req.body);
 
-  if (error != null) return res.status(400).send(error.details[0].message);
+  if (error != null) {
+    logger.error(error.details[0].message);
+    return res.status(400).send(error.details[0].message);
+  }
 
   if (req.userRole !== "admin") {
     const ticket = await Ticket.findOne({ _id: req.params.id });
