@@ -19,7 +19,6 @@ const ticketSchema = new mongoose.Schema({
 
   folio: {
     type: String,
-    trim: true,
     max: 32,
   },
 

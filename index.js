@@ -43,8 +43,7 @@ app.use(function (_req, res, _next) {
 
 // 500 handler
 app.use(function (err, _req, res, _next) {
-  console.log(err);
-  logger.error(err);
+  logger.error("Error de servidor");
   return res.status(500).send({ message: "Error de servidor" });
 });
 
