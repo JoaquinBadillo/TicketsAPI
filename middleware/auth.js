@@ -9,14 +9,17 @@ const authenticate = async (req, res, next) => {
     process.env.ACCESS_TOKEN_SECRET,
     (err, decoded) => {
       if (err) {
-        logger.err("Attempted unauthorized access");
-        return res.status(401).send({ message: "Unauthorized" });
+        logger.error("Attempted unauthorized access");
+        return;
       }
 
       req.userId = decoded.id;
       req.userRole = decoded.role;
     }
   );
+  
+  if (req.userId == null || req.userRole == null)
+    return res.status(401).send({ message: "Unauthorized" });
 
   const user = await User.findOne({ _id: req.userId });
 
